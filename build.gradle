@@ -1,0 +1,88 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+archivesBaseName="ddt-gameserver"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+	compile group: 'io.netty', name: 'netty-all', version: '4.1.9.Final'
+    compile fileTree(dir:'libs',include:['*.jar'])
+}
+
+
+task "create-project" << {
+   sourceSets*.java.srcDirs*.each { it.mkdirs() }
+   sourceSets*.resources.srcDirs*.each { it.mkdirs() }
+}
+
+//拷贝依赖jar
+task releaseDependsJars(type: Copy) {  
+    from configurations.runtime  
+    into 'dist/libs'  
+}
+
+//拷贝项目jar
+task releaseGameJar(type:Copy){
+    from 'build/libs/'
+    into 'dist/libs'
+}
+
+//拷贝资源
+task releaseResources(type: Copy) {  
+    from 'src/main/resources'
+    into 'dist/resources'  
+}
+
+//获取当前项目路径
+def releasePath() {
+	return "build success,deploy path:" + new File("").getCanonicalPath()+ "\\dist"
+}
+
+
+//清除上次的编译过的文件  
+task cleanup(type:Delete) {  
+   delete 'build','dist'  
+}
+
+task deploy(dependsOn:[build,releaseGameJar,releaseDependsJars,releaseResources]) {
+	doLast{
+		println rootDir.getAbsolutePath() + "\\dist";
+		println rootDir.getAbsolutePath();
+		File buildDir = new File(rootDir.getAbsolutePath() + '\\build');
+		buildDir.deleteDir();
+	}
+}
+
+
+//////函数学习
+def var = 1
+def var2 = "shiping.foo"
+
+task dir << {
+	FileTree dir = fileTree(dir:"dist")
+	dir.each{
+		File file -> println file.name
+	}
+}
+
+task dir2 << {
+	def iotJars = files(file('dist').listFiles())
+	println ''
+	println iotJars
+	iotJars.each { File file -> println 'The next file is: ' + file.name }
+}
+
+
+//调用shell
+task runSh(type: Exec) {
+    //executable 'sh'
+    //args "-c","../shelldemo.sh $jenkinsJobName $jenkinsBuild"
+}
+
+task  runBat(type:Exec,description:'just for test bat  task'){
+    workingDir '.'
+    commandLine 'cmd',"/c","test.bat"
+}
+
